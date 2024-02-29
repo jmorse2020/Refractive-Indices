@@ -154,7 +154,7 @@ class RefractiveIndex:
         wavelengths ([float]): An array of wavelengths in [nm]
         pressure (float): Pressure of gas in mBar
         temperature (float): Temperature of gas in Kelvin
-        gas_name (string): The name of the gas, one of: "Air", "Nitrogen", "Helium", "Neon", "Argon", "Krypton", "Xenon".
+        gas_name (string): The name of the gas, one of: "Air", "Nitrogen", "Helium", "Neon", "Argon", "Krypton", "Xenon". Default to "Argon"
     
         Returns
         -------
@@ -181,22 +181,27 @@ class RefractiveIndex:
             "xenon": xenon_array
         }
 
-        selected_gas = gases[str(gas_name).lower()]
+        
         if selected_gas is None:
+            selected_gas = gases["argon"]
+        elif str(selected_gas).lower() in gases.keys():
+            selected_gas = gases[str(gas_name).lower()]
+        else:
             print("Not a valid gas name. Gas must be one of: 'Air', 'Nitrogen', 'Helium', 'Neon', 'Argon', 'Krypton', 'Xenon'.")
             return []
         
-        B_1 = selected_gas[0] * 1e8
-        C_1 = selected_gas[1] * 1e6
-        B_2 = selected_gas[2] * 1e8
-        C_2 = selected_gas[3] * 1e3
+        B_1 = selected_gas[0] # * 1e8
+        C_1 = selected_gas[1] # * 1e6
+        B_2 = selected_gas[2] # * 1e8
+        C_2 = selected_gas[3] # * 1e3
 
-        p_0 = 1000      # mbars
-        T_0 = 273       # K
+        p_0 = 1000.0      # mbars
+        T_0 = 273.0       # K
         
         n_squared_minus_1 = (pressure / p_0) * (T_0 / temperature) * ( (B_1 * wavelengths**2) / (wavelengths**2 - C_1) + (B_2) / (wavelengths**2 - C_2))
+        # print(n_squared_minus_1)
         n = np.sqrt(n_squared_minus_1 + 1)
-        return n
+        return np.array(n)
     
 
     def _deriv(f, wavelength, h=1e-6):
