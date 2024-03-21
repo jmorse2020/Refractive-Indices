@@ -71,7 +71,7 @@ class RefractiveIndex:
         # Return the nth zero
         return zeros[n]
     
-    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real"):
+    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real", parameter = "wavelength", normalised_gap = None):
         '''
         Refractive index of hollow-core fibre, model based on Zeisberger paper (doi: 10.1038/s41598-017-12234-5) 'Analytic model for the complex
         effective index of the leaky modes of tube-type anti-resonant hollow-core fibers'
@@ -86,6 +86,8 @@ class RefractiveIndex:
         n_wall (func): Refractive index of the capillary wall. Must take arguments wavelength [nm]. (Default fused silica). 
         R (float): Radius of fibre core [m] 
         w (float): Wall thickness [m]
+        part (string): For effective index ("Real") for loss part ("Imag")
+        parameter (string): For arguments in wavelengths [nm] or angular frequency
          
     
         Returns
@@ -101,8 +103,17 @@ class RefractiveIndex:
         c = 3e8                                                                 # SOL in ms^-1
         lambdas = RefractiveIndex._nm2m(wavelengths)
 
+        # *** Check n_wall > n_gas *** #
+        if (n_gas(wavelengths) >= n_wall(wavelengths)).all():
+            raise ValueError("Sort it out mate; n_wall must be greater than n_gas for all wavelengths inputted. Need to adjust n_gas parameters.")
         # *** Obtaining parameters *** #
-        jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
+        if isinstance(normalised_gap, float):
+            j_gap_coefficients = np.array([-0.10530537, -0.03895234,  2.2528778]) # By fitting to data in Fig 2 (d) for M = 6 in https://doi.org/10.1364/OE.27.027745
+            jz = np.polyval(j_gap_coefficients, normalised_gap)
+        else:
+            if normalised_gap != None:
+                print("Normalised gap value not a float, defaulting to bessel zero.")
+            jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
         j1nz = RefractiveIndex._find_bessel_zero(1, mode[1] - 1) 
         k_0_lambda = 2 * np.pi / lambdas                                        # Vacuum wavenumber 
         n_wall_lambda = n_wall(wavelengths)                                        
@@ -182,18 +193,18 @@ class RefractiveIndex:
         }
 
         
-        if selected_gas is None:
+        if gas_name is None:
             selected_gas = gases["argon"]
-        elif str(selected_gas).lower() in gases.keys():
+        elif str(gas_name).lower() in gases.keys():
             selected_gas = gases[str(gas_name).lower()]
         else:
             print("Not a valid gas name. Gas must be one of: 'Air', 'Nitrogen', 'Helium', 'Neon', 'Argon', 'Krypton', 'Xenon'.")
             return []
         
-        B_1 = selected_gas[0] # * 1e8
-        C_1 = selected_gas[1] # * 1e6
-        B_2 = selected_gas[2] # * 1e8
-        C_2 = selected_gas[3] # * 1e3
+        B_1 = selected_gas[0] * 1e-8
+        C_1 = selected_gas[1] * 1e-6
+        B_2 = selected_gas[2] * 1e-8
+        C_2 = selected_gas[3] * 1e-3
 
         p_0 = 1000.0      # mbars
         T_0 = 273.0       # K
