@@ -71,7 +71,17 @@ class RefractiveIndex:
         # Return the nth zero
         return zeros[n]
     
-    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real", parameter = "wavelength", normalised_gap = None):
+    def calculate_gamma(M, w, r_core, r_cap):
+        ########## Insert everything in SI ##########
+        # Function returns gamma which is normalised gap between capillaries in HCF
+        # M = number of capillaries
+        # w = capillary wall thickness
+        # r_core = core radius
+        # r_cap = capillary radius
+        g = 2 * ( ( r_cap + w )( np.sin( np.pi / M) - 1 ) + r_core * np.sin( np.pi / M ) )
+        return g / r_core
+
+    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real", parameter = "wavelength", normalised_gap = False, r_cap = None, M = 6):
         '''
         Refractive index of hollow-core fibre, model based on Zeisberger paper (doi: 10.1038/s41598-017-12234-5) 'Analytic model for the complex
         effective index of the leaky modes of tube-type anti-resonant hollow-core fibers'
@@ -107,14 +117,23 @@ class RefractiveIndex:
         if (n_gas(wavelengths) >= n_wall(wavelengths)).all():
             raise ValueError("Sort it out mate; n_wall must be greater than n_gas for all wavelengths inputted. Need to adjust n_gas parameters.")
         # *** Obtaining parameters *** #
-        if isinstance(normalised_gap, float):
+        if r_cap == None:
+            r_cap = 0.7 * R             # Default to 0.7 times the core radius as this is a reasonable value
+        elif not isinstance(r_cap, float):
+            print("Your value is not a float, so defaulting to 0.7 * R")
+            r_cap = 0.7 * R             # Default to 0.7 times the core radius as this is a reasonable value
+        
+        if normalised_gap == True:
             j_gap_coefficients = np.array([-0.10530537, -0.03895234,  2.2528778]) # By fitting to data in Fig 2 (d) for M = 6 in https://doi.org/10.1364/OE.27.027745
+            normalised_gap = RefractiveIndex.calculate_gamma(M, w, R, r_cap)
             jz = np.polyval(j_gap_coefficients, normalised_gap)
         else:
             if normalised_gap != None:
                 print("Normalised gap value not a float, defaulting to bessel zero.")
             jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
-        j1nz = RefractiveIndex._find_bessel_zero(1, mode[1] - 1) 
+        j1nz =  RefractiveIndex._find_bessel_zero(1, mode[1] - 1)
+        print("j1nz is")
+        print(j1nz)
         k_0_lambda = 2 * np.pi / lambdas                                        # Vacuum wavenumber 
         n_wall_lambda = n_wall(wavelengths)                                        
 
