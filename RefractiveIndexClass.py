@@ -137,7 +137,8 @@ class RefractiveIndex:
         else:
             print("Normalised gap value not a float, defaulting to bessel zero.")
             jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
-        j1nz =  RefractiveIndex._find_bessel_zero(1, mode[1] - 1)
+        # j1nz =  RefractiveIndex._find_bessel_zero(1, mode[1] - 1)
+        j1nz =  RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1) # should have 1st zero of J(0) in both the Re and Im cases
         print("j1nz is")
         print(j1nz)
         k_0_lambda = 2 * np.pi / lambdas                                        # Vacuum wavenumber 
@@ -158,7 +159,8 @@ class RefractiveIndex:
         elif part.lower() in imaginary_keyword_array:
             print("In,,,,,")
             sigma = 1 / (k_0_lambda * n_gas(wavelengths) * R)
-            d = j1nz**3 / (epsilon_lambda * (epsilon_lambda - 1)) * (1 + (1 / np.tan(phi_lambda)**2))
+            #d = j1nz**3 / (epsilon_lambda * (epsilon_lambda - 1)) * (1 + (1 / np.tan(phi_lambda)**2)) ######## wrong expression, see corrected below
+            d = n_gas(wavelengths) * ( j1nz**3 ) * ( epsilon_lambda**2 + 1 ) * ( 1 + ( 1 / np.tan(phi_lambda)**2 ) ) / ( 2 * ( epsilon_lambda - 1 ) * ( k_0_lambda * n_gas(wavelengths) * R )**4 )
             Im_n_eff = n_gas(wavelengths) * d * sigma**4
             HCF_refractive_indices = Im_n_eff
         else:
