@@ -138,9 +138,9 @@ class RefractiveIndex:
             print("Normalised gap value not a float, defaulting to bessel zero.")
             jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
         # j1nz =  RefractiveIndex._find_bessel_zero(1, mode[1] - 1)
-        j1nz =  RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1) # should have 1st zero of J(0) in both the Re and Im cases
-        print("j1nz is")
-        print(j1nz)
+        j1nz = jz  # should have 1st zero of J(0) in both the Re and Im cases
+        # print("j1nz is")
+        # print(j1nz)
         k_0_lambda = 2 * np.pi / lambdas                                        # Vacuum wavenumber 
         n_wall_lambda = n_wall(wavelengths)                                        
 
