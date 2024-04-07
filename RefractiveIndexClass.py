@@ -81,7 +81,7 @@ class RefractiveIndex:
         g = 2 * ( ( r_cap + w ) * ( np.sin( np.pi / M) - 1 ) + r_core * np.sin( np.pi / M ) )
         return g / r_core
 
-    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real", parameter = "wavelength", normalised_gap = False, r_cap = None, M = 6):
+    def HCF(wavelengths, mode = [1, 1], n_gas = None, n_wall = None, R = 20e-6, w=0.7e-6, part = "Real", parameter = "wavelength", normalised_gap = False, r_cap = None, M = 6, print_statements = True):
         '''
         Refractive index of hollow-core fibre, model based on Zeisberger paper (doi: 10.1038/s41598-017-12234-5) 'Analytic model for the complex
         effective index of the leaky modes of tube-type anti-resonant hollow-core fibers'
@@ -128,12 +128,14 @@ class RefractiveIndex:
         if normalised_gap == True:
             normalised_gap = RefractiveIndex.calculate_gamma(M, w, R, r_cap)
             jz = np.polyval(j_gap_coefficients, normalised_gap)
-            print("j value")
-            print(jz)
+            if print_statements:
+                print("j value")
+                print(jz)
         elif isinstance(normalised_gap, float):
             jz = np.polyval(j_gap_coefficients, normalised_gap)
-            print("j value")
-            print(jz)
+            if print_statements:
+                print("j value")
+                print(jz)
         else:
             print("Normalised gap value not a float, defaulting to bessel zero.")
             jz = RefractiveIndex._find_bessel_zero(mode[0] - 1, mode[1] - 1)        # for j_(m-1),n where the nth root here is the "first root of the function", i.e. the zeroth root of Bessel funciton on order m
@@ -157,7 +159,7 @@ class RefractiveIndex:
             HCF_refractive_indices = n_eff_lambda
         # *** Effective index imaginary (loss) *** #
         elif part.lower() in imaginary_keyword_array:
-            print("In,,,,,")
+            # print("In,,,,,")
             sigma = 1 / (k_0_lambda * n_gas(wavelengths) * R)
             #d = j1nz**3 / (epsilon_lambda * (epsilon_lambda - 1)) * (1 + (1 / np.tan(phi_lambda)**2)) ######## wrong expression, see corrected below
             d = n_gas(wavelengths) * ( j1nz**3 ) * ( epsilon_lambda**2 + 1 ) * ( 1 + ( 1 / np.tan(phi_lambda)**2 ) ) / ( 2 * ( epsilon_lambda - 1 ) * ( k_0_lambda * n_gas(wavelengths) * R )**4 )
